@@ -2,6 +2,11 @@ const score = document.querySelector('.score');
 const start = document.querySelector('.start');
 const gameArea = document.querySelector('.gameArea');
 const car = document.createElement('div');
+const music = document.createElement('embed');
+
+music.setAttribute('src', './audio.mp3');
+music.setAttribute('type', 'audio/mp3');
+music.classList.add('music');
 
 car.classList.add('car');
 
@@ -29,6 +34,7 @@ function getQuantityElements (heightElement) {
 
 function startGame () {
     start.classList.add('hide');
+    gameArea.innerHTML = '';
     // Цикл создания полос
     for (let i = 0; i < getQuantityElements(50); i++) {
         const line = document.createElement('div');
@@ -49,8 +55,13 @@ function startGame () {
 
     }
 
+    settings.score = 0;
     settings.start = true;
     gameArea.appendChild(car);
+    car.style.left = (gameArea.offsetWidth / 2) - (car.offsetWidth / 2);
+    car.style.top = 'auto';
+    car.style.bottom = '10px';
+    gameArea.appendChild(music);
     settings.x = car.offsetLeft;
     settings.y = car.offsetTop;
     requestAnimationFrame(playGame);
@@ -58,6 +69,8 @@ function startGame () {
 
 function playGame () {
     if (settings.start) {
+        settings.score += settings.speed;
+        score.innerHTML = 'SCORE<br>' + settings.score;
         moveRoad();
         moveEnemy();
         if (keys.ArrowLeft && settings.x > 0) {
@@ -82,12 +95,16 @@ function playGame () {
 
 function startRun (event) {
     event.preventDefault();
-    keys[event.key] = true;
+    if (event.key in keys) {
+        keys[event.key] = true;
+    }
 };
 
 function stopRun (event) {
     event.preventDefault();
-    keys[event.key] = false;
+    if (event.key in keys) {
+        keys[event.key] = false;
+    }
 };
 
 function moveRoad () {
@@ -105,7 +122,21 @@ function moveRoad () {
 
 function moveEnemy () {
     let enemy = document.querySelectorAll('.enemy');
+
     enemy.forEach(function (item) {
+        let carRect = car.getBoundingClientRect();
+        let enemyRect = item.getBoundingClientRect();
+
+        if (carRect.top <= enemyRect.bottom &&
+            carRect.right >= enemyRect.left &&
+            carRect.left <= enemyRect.right &&
+            carRect.bottom >= enemyRect.top) {
+                settings.start = false;
+                console.warn('ДТП');
+                start.classList.remove('hide');
+                start.style.top = score.offsetHeight;
+        }
+
         item.y += settings.speed / 2;
         item.style.top = item.y + 'px';
 
